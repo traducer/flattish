@@ -39,7 +39,7 @@ gulp.task('default', ['webpack'], () => {
     server: {
       baseDir: './',
     },
-    browser: 'chrome',
+    browser: 'google-chrome',
     port: 8080,
   });
 

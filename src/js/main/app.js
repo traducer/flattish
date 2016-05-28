@@ -649,7 +649,7 @@ function readImg(file, location) {
           context.drawImage(image, 0, 0, 330, image.height / scaleFactor);
 
           // return base64 for resized image
-          returnBase64(canvas.toDataURL());
+          resolve(canvas.toDataURL());
 
           // detach canvas element
           $('#canvas').detach();
