@@ -620,51 +620,55 @@ function checkDimensions(file, callback) {
   image.src = file.target.result;
 }
 
-function readImg(file, location, returnBase64) {
-  let reader = new FileReader();
-  reader.onload = (event) => {
-    checkDimensions(event, (image) => {
-      // resize image if not 330px wide
-      if (image.width !== 330) {
-        // create canvas element
-        $('.header')
-          .after('<canvas id="canvas" width="0" height="0"></canvas>');
-        let [canvas] = $('#canvas');
-        let context = canvas.getContext('2d');
-        let scaleFactor = image.width / 330;
+function readImg(file, location) {
+  const promise = new Promise((resolve, reject) => {
+    let reader = new FileReader();
+    reader.onload = (event) => {
+      checkDimensions(event, (image) => {
+        // resize image if not 330px wide
+        if (image.width !== 330) {
+          // create canvas element
+          $('.header')
+            .after('<canvas id="canvas" width="0" height="0"></canvas>');
+          let [canvas] = $('#canvas');
+          let context = canvas.getContext('2d');
+          let scaleFactor = image.width / 330;
 
-        // resize canvas to exactly fit resized image
-        $('#canvas').prop({
-          'width': '330',
-          'height': `${Math.round(image.height / scaleFactor)}`,
-        });
+          // resize canvas to exactly fit resized image
+          $('#canvas').prop({
+            'width': '330',
+            'height': `${Math.round(image.height / scaleFactor)}`,
+          });
 
-        if (location === 'sidebar') {
-          // recalculate image height
-          sidebarImg.height = Math.round(image.height / scaleFactor);
+          if (location === 'sidebar') {
+            // recalculate image height
+            sidebarImg.height = Math.round(image.height / scaleFactor);
+          }
+
+          // draw image on canvas to convert to base64
+          context.drawImage(image, 0, 0, 330, image.height / scaleFactor);
+
+          // return base64 for resized image
+          returnBase64(canvas.toDataURL());
+
+          // detach canvas element
+          $('#canvas').detach();
+        } else {
+          if (location === 'sidebar') {
+            // image height remains
+            sidebarImg.height = image.height;
+          }
+
+          // return base64 for resized image
+          resolve(reader.result);
         }
+      });
+    }
 
-        // draw image on canvas to convert to base64
-        context.drawImage(image, 0, 0, 330, image.height / scaleFactor);
+    reader.readAsDataURL(file);
+  })
 
-        // return base64 for resized image
-        returnBase64(canvas.toDataURL());
-
-        // detach canvas element
-        $('#canvas').detach();
-      } else {
-        if (location === 'sidebar') {
-          // image height remains
-          sidebarImg.height = image.height;
-        }
-
-        // return base64 for resized image
-        returnBase64(reader.result);
-      }
-    });
-  }
-
-  reader.readAsDataURL(file);
+  return promise
 }
 
 function previewImg(input, location, selector = undefined) {
@@ -809,7 +813,8 @@ function previewImg(input, location, selector = undefined) {
               // file type validation
               if (imageType.test(fileObj[key].type)) {
                 // read contents of uploaded file(s)
-                readImg(fileObj[key], location, (base64) => {
+                readImg(fileObj[key], location)
+                .then((base64) => {
                   // validate file size
                   if (filesize > 500000) {
                     // return error due to file size
@@ -819,6 +824,8 @@ function previewImg(input, location, selector = undefined) {
                     rotatingHeaders[`header${counter}`] = {
                       URL: base64,
                     };
+
+                    console.log(rotatingHeaders)
 
                     if (counter !== fileObj.length) {
                       // increment counter
