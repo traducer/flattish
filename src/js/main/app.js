@@ -825,7 +825,9 @@ function previewImg(input, location, selector = undefined) {
                       URL: base64,
                     };
 
-                    console.log(rotatingHeaders)
+                    if(
+
+                    console.log(fileObj.length)
 
                     if (counter !== fileObj.length) {
                       // increment counter
